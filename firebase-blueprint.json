@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Contact": {
+      "title": "Contact",
+      "description": "A contact in the user's phonebook.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "groupIds": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phoneNumber", "ownerId"]
+    },
+    "Group": {
+      "title": "Group",
+      "description": "A group of contacts.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "ownerId"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "An SMS message sent by the user.",
+      "type": "object",
+      "properties": {
+        "to": { "type": "string" },
+        "body": { "type": "string" },
+        "status": { "type": "string", "enum": ["sent", "failed"] },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["to", "body", "status", "ownerId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles."
+    },
+    "contacts/{contactId}": {
+      "schema": "Contact",
+      "description": "User contacts."
+    },
+    "groups/{groupId}": {
+      "schema": "Group",
+      "description": "User contact groups."
+    },
+    "messages/{messageId}": {
+      "schema": "Message",
+      "description": "Sent message history."
+    }
+  }
+}

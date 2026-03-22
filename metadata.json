@@ -1,0 +1,5 @@
+{
+  "name": "ProSMS Dashboard",
+  "description": "A professional SMS management platform with phonebook, history tracking, and secure API integration.",
+  "requestFramePermissions": []
+}

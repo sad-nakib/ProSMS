@@ -127,6 +127,30 @@ export default function App() {
   const user = mockUser;
   const [activeTab, setActiveTab] = useState<'send' | 'contacts' | 'history'>('send');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [balance, setBalance] = useState<number | string | null>(null);
+  const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
+
+  const fetchBalance = async () => {
+    setIsRefreshingBalance(true);
+    try {
+      const response = await fetch('/api/balance');
+      const data = await response.json();
+      if (data.success) {
+        setBalance(data.balance);
+      } else {
+        setBalance(data.balance || 'Error');
+      }
+    } catch (error) {
+      console.error("Failed to fetch balance", error);
+      setBalance('Error');
+    } finally {
+      setIsRefreshingBalance(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBalance();
+  }, []);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
@@ -203,6 +227,25 @@ export default function App() {
               onClick={() => { setActiveTab('history'); closeSidebar(); }} 
             />
           </nav>
+
+          <div className="mt-8 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">SMS Balance</span>
+              <button 
+                onClick={fetchBalance}
+                disabled={isRefreshingBalance}
+                className="p-1 rounded-lg hover:bg-slate-200 text-slate-400 transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={cn("w-3 h-3", isRefreshingBalance && "animate-spin")} />
+              </button>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold tracking-tight">
+                {balance === null ? '...' : balance}
+              </span>
+              <span className="text-[10px] font-medium text-slate-400 uppercase">SMS</span>
+            </div>
+          </div>
         </div>
 
         <div className="mt-auto p-6 border-t border-slate-100">
@@ -313,6 +356,8 @@ function SMSComposer({ user }: { user: any }) {
 
     try {
       let successCount = 0;
+      let lastErrorMessage = '';
+      
       for (const recipient of recipients) {
         const response = await fetch('/api/send-sms', {
           method: 'POST',
@@ -321,6 +366,10 @@ function SMSComposer({ user }: { user: any }) {
         });
 
         const result = await response.json();
+
+        if (!result.success) {
+          lastErrorMessage = result.message || result.error || 'Unknown error';
+        }
 
         await addDoc(collection(db, 'messages'), {
           to: recipient,
@@ -339,7 +388,12 @@ function SMSComposer({ user }: { user: any }) {
         setTo('');
         localStorage.removeItem(`sms_draft_${user.uid}`);
       } else {
-        setStatus({ type: 'error', message: `Sent to ${successCount}/${recipients.length} recipients.` });
+        setStatus({ 
+          type: 'error', 
+          message: successCount === 0 
+            ? `Failed to send: ${lastErrorMessage}` 
+            : `Sent to ${successCount}/${recipients.length} recipients. Last error: ${lastErrorMessage}` 
+        });
       }
     } catch (error) {
       setStatus({ type: 'error', message: 'An unexpected error occurred' });

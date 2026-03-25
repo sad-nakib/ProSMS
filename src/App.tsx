@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { auth, loginWithGoogle, logout, db } from './firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { db } from './firebase';
 import { 
   collection, 
   query, 
@@ -108,56 +107,29 @@ enum OperationType {
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const errInfo = {
     error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-    },
     operationType,
     path
   }
   console.error('Firestore Error: ', JSON.stringify(errInfo));
 }
 
+// --- Mock User for Single User Mode ---
+const mockUser = {
+  uid: 'public-user',
+  displayName: 'ProSMS User',
+  email: 'user@prosms.local',
+  photoURL: 'https://picsum.photos/seed/prosms/200'
+};
+
 // --- Main App ---
 
 export default function App() {
-  const [user, loading] = useAuthState(auth);
+  const user = mockUser;
   const [activeTab, setActiveTab] = useState<'send' | 'contacts' | 'history'>('send');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f5f5] p-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md text-center space-y-8"
-        >
-          <div className="space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-900 text-white mb-4">
-              <MessageSquare className="w-8 h-8" />
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight">ProSMS Dashboard</h1>
-            <p className="text-slate-500">Professional SMS management for your business.</p>
-          </div>
-          <Button onClick={loginWithGoogle} size="lg" className="w-full py-4 text-lg">
-            Sign in with Google
-          </Button>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex bg-[#f5f5f5] overflow-x-hidden">
@@ -234,17 +206,13 @@ export default function App() {
         </div>
 
         <div className="mt-auto p-6 border-t border-slate-100">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3">
             <img src={user.photoURL || ''} alt="" className="w-8 h-8 rounded-full border border-slate-200" referrerPolicy="no-referrer" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{user.displayName}</p>
-              <p className="text-xs text-slate-500 truncate">{user.email}</p>
+              <p className="text-xs text-slate-500 truncate">Local Instance</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-slate-500" onClick={logout}>
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </Button>
         </div>
       </aside>
 
